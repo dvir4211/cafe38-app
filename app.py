@@ -1,58 +1,65 @@
 import streamlit as st
 
 # הגדרות בסיסיות
-st.set_page_config(page_title="קפה 38 | מערכת צוות", layout="wide", initial_sidebar_state="collapsed")
-
 # ---------------------------------------------------------
-# CSS מותאם אישית - יישור לימין, גופן גדול וצבעים חיים!
+# CSS מותאם אישית - ריספונסיבי למובייל, גופן אחיד ויוקרתי
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap');
     
     * {
-        font-family: 'Heebo', sans-serif !important;
+        font-family: 'Assistant', sans-serif !important;
         direction: rtl !important;
         text-align: right !important;
     }
     
-    .stApp { background-color: #f4f7f6; }
+    .stApp { background-color: #f8f9fa; }
     
-    h1 { font-size: 3.5rem !important; color: #2c3e50; font-weight: 900 !important; margin-bottom: 20px;}
-    h2, h3 { font-size: 2.2rem !important; color: #e67e22; font-weight: 700 !important; }
+    /* פונקציית clamp מתאימה את גודל הטקסט אוטומטית למובייל ולמחשב */
+    h1 { font-size: clamp(2rem, 5vw, 3.5rem) !important; color: #2c3e50; font-weight: 800 !important; margin-bottom: 15px;}
+    h2, h3 { font-size: clamp(1.5rem, 4vw, 2.2rem) !important; color: #e67e22; font-weight: 600 !important; }
     
-    /* כרטיסיות גדולות וצבעוניות */
+    /* כרטיסיות מותאמות למובייל */
     .card {
         background: white;
-        padding: 25px;
-        border-radius: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 8px 15px rgba(0,0,0,0.05);
-        border-right: 15px solid;
+        padding: 15px;
+        border-radius: 16px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+        border-right: 8px solid;
     }
-    .card-food { border-color: #ff6b81; } /* אדום-ורוד לאוכל */
-    .card-wine { border-color: #8e44ad; } /* סגול-יין לאלכוהול */
-    .card-cocktail { border-color: #f39c12; } /* צהוב-כתום לקוקטיילים */
-    .card-task { border-color: #16a085; } /* ירוק לנהלים */
+    .card-food { border-color: #ff6b81; } 
+    .card-wine { border-color: #8e44ad; } 
+    .card-cocktail { border-color: #f39c12; } 
+    .card-task { border-color: #16a085; } 
     
-    .item-title { font-size: 28px; font-weight: 900; color: #2d3436; margin-bottom: 10px;}
-    .item-desc { font-size: 22px; color: #2f3640; line-height: 1.5; margin-bottom: 15px;}
-    .item-notes { font-size: 20px; color: #c23616; font-weight: bold; background: #fbc531; padding: 5px 12px; border-radius: 8px; display: inline-block;}
+    /* עיצוב טקסט בתוך הכרטיסיות */
+    .item-title { font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: 800; color: #2d3436; margin-bottom: 8px;}
+    .item-desc { font-size: clamp(1rem, 2.5vw, 1.2rem); color: #2f3640; line-height: 1.4; margin-bottom: 10px;}
+    .item-notes { font-size: clamp(0.9rem, 2vw, 1.1rem); color: #c23616; font-weight: 600; background: #fff0f0; padding: 4px 10px; border-radius: 6px; display: inline-block; border: 1px solid #ffcccc;}
     
-    /* תגיות צבעוניות ענקיות */
-    .tag { font-size: 18px; font-weight: bold; padding: 8px 15px; border-radius: 10px; display: inline-block; margin-left: 10px; margin-top: 10px; }
-    .t-veg { background: #2ed573; color: white; }
-    .t-gf { background: #eccc68; color: #2f3542; }
-    .t-preg { background: #70a1ff; color: white; }
-    .t-warn { background: #ff4757; color: white; }
+    /* תגיות מותאמות שלא שוברות שורות במובייל */
+    .tag { font-size: clamp(0.8rem, 2vw, 1rem); font-weight: 600; padding: 5px 10px; border-radius: 8px; display: inline-block; margin: 4px 0 4px 8px; }
+    .t-veg { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
+    .t-gf { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3;}
+    .t-preg { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;}
+    .t-warn { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;}
     
-    /* כפתורים מוגדלים */
+    /* כפתורים אלגנטיים */
     .stButton > button {
-        font-size: 24px !important;
-        font-weight: 900 !important;
-        padding: 15px !important;
-        border-radius: 15px !important;
-        border: 2px solid #bdc3c7 !important;
+        font-size: clamp(1.2rem, 3vw, 1.5rem) !important;
+        font-weight: 800 !important;
+        padding: 10px !important;
+        border-radius: 12px !important;
+        border: 1px solid #e0e0e0 !important;
+        background-color: white !important;
+        color: #2c3e50 !important;
+        transition: all 0.2s;
+    }
+    .stButton > button:hover {
+        border-color: #2c3e50 !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
