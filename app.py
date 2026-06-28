@@ -1,12 +1,23 @@
 import streamlit as st
+import sqlite3
 
-# הגדרות בסיסיות
+def fetch_data(query, params=()):
+    conn = sqlite3.connect('cafe38.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+st.set_page_config(page_title="CAFÉ 38 | צוות", layout="wide", initial_sidebar_state="collapsed")
+
 # ---------------------------------------------------------
-# CSS מותאם אישית - ריספונסיבי למובייל, גופן אחיד ויוקרתי
+# CSS מודרני, אחיד ויוקרתי המותאם ללמידה במובייל
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap');
     
     * {
         font-family: 'Assistant', sans-serif !important;
@@ -14,240 +25,54 @@ st.markdown("""
         text-align: right !important;
     }
     
-    .stApp { background-color: #f8f9fa; }
+    .stApp { background-color: #fcfbf9; }
     
-    /* פונקציית clamp מתאימה את גודל הטקסט אוטומטית למובייל ולמחשב */
-    h1 { font-size: clamp(2rem, 5vw, 3.5rem) !important; color: #2c3e50; font-weight: 800 !important; margin-bottom: 15px;}
-    h2, h3 { font-size: clamp(1.5rem, 4vw, 2.2rem) !important; color: #e67e22; font-weight: 600 !important; }
+    h1 { font-size: clamp(2.2rem, 6vw, 4rem) !important; color: #1e3799; font-weight: 800 !important; text-align: center !important; margin-bottom: 25px;}
+    h2 { font-size: clamp(1.6rem, 4vw, 2.2rem) !important; color: #2c3e50; font-weight: 600 !important; margin-top: 20px;}
     
-    /* כרטיסיות מותאמות למובייל */
+    /* כרטיסיות מידע משופרות ללמידה */
     .card {
         background: white;
-        padding: 15px;
-        border-radius: 16px;
+        padding: 20px;
+        border-radius: 18px;
         margin-bottom: 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-        border-right: 8px solid;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        border: 1px solid #eaeaea;
     }
-    .card-food { border-color: #ff6b81; } 
-    .card-wine { border-color: #8e44ad; } 
-    .card-cocktail { border-color: #f39c12; } 
-    .card-task { border-color: #16a085; } 
     
-    /* עיצוב טקסט בתוך הכרטיסיות */
-    .item-title { font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: 800; color: #2d3436; margin-bottom: 8px;}
-    .item-desc { font-size: clamp(1rem, 2.5vw, 1.2rem); color: #2f3640; line-height: 1.4; margin-bottom: 10px;}
-    .item-notes { font-size: clamp(0.9rem, 2vw, 1.1rem); color: #c23616; font-weight: 600; background: #fff0f0; padding: 4px 10px; border-radius: 6px; display: inline-block; border: 1px solid #ffcccc;}
+    .card-food { border-right: 10px solid #ff6b81; }
+    .card-cocktail { border-right: 10px solid #f39c12; background-color: #fffdf9; }
+    .card-task { border-right: 10px solid #16a085; }
     
-    /* תגיות מותאמות שלא שוברות שורות במובייל */
-    .tag { font-size: clamp(0.8rem, 2vw, 1rem); font-weight: 600; padding: 5px 10px; border-radius: 8px; display: inline-block; margin: 4px 0 4px 8px; }
-    .t-veg { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
-    .t-gf { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3;}
-    .t-preg { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;}
-    .t-warn { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;}
+    .item-title { font-size: clamp(1.3rem, 3.5vw, 1.7rem); font-weight: 800; color: #1e272e; margin-bottom: 8px;}
+    .item-desc { font-size: clamp(1rem, 2.8vw, 1.25rem); color: #485460; line-height: 1.5; margin-bottom: 12px;}
     
-    /* כפתורים אלגנטיים */
-    .stButton > button {
-        font-size: clamp(1.2rem, 3vw, 1.5rem) !important;
-        font-weight: 800 !important;
-        padding: 10px !important;
-        border-radius: 12px !important;
-        border: 1px solid #e0e0e0 !important;
-        background-color: white !important;
-        color: #2c3e50 !important;
-        transition: all 0.2s;
+    /* מבנה לימודי מיוחד למרכיבי קוקטיילים */
+    .ingredients-box {
+        background: #f1f2f6;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: clamp(1.05rem, 3vw, 1.3rem);
+        color: #2f3542;
+        font-weight: 600;
+        line-height: 1.6;
+        border-left: 4px solid #f39c12;
+        margin-top: 10px;
     }
-    .stButton > button:hover {
-        border-color: #2c3e50 !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+    
+    .item-notes { font-size: clamp(0.95rem, 2.5vw, 1.15rem); color: #c23616; font-weight: 600; background: #ffebee; padding: 6px 12px; border-radius: 8px; display: inline-block; margin-top: 10px;}
+    
+    .tag { font-size: clamp(0.8rem, 2.2vw, 0.95rem); font-weight: 600; padding: 4px 10px; border-radius: 6px; display: inline-block; margin: 4px 0 4px 6px; }
+    .t-veg { background: #e8f5e9; color: #2e7d32; }
+    .t-gf { background: #fff8e1; color: #f57f17; }
+    .t-preg { background: #e3f2fd; color: #1565c0; }
+    .t-warn { background: #ffebee; color: #c62828; }
+
+    /* התאמת טאבים */
+    .stTabs [data-baseweb="tab"] { font-size: clamp(1rem, 3vw, 1.4rem) !important; font-weight: 600 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# בסיס הנתונים - קפה 38 
-# ---------------------------------------------------------
-food_menu = [
-    # בוקר ובראנץ'
-    {"name": "אומלט פטריות", "cat": "בוקר", "desc": "חביתה ממולאת פטריות צלויות, מחית כמהין, מוצרלה ומסקרפונה. סלט קטן ולחם קסטן.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל לקטוז וגלוטן. לחם ללג אפשרי."},
-    {"name": "אומלט WD (אבוקדו)", "cat": "בוקר", "desc": "טוסט קאסטן, אבוקדו, מקושקשת, פרמזן, רומסקו וביארנז.", "preg": True, "preg_note": "רק WD וללא רוטב ביארנז", "vegan": False, "gf": False, "notes": "מכיל לקטוז וגלוטן."},
-    {"name": "בנדיקט", "cat": "בוקר", "desc": "בריוש צלוי, סלמון / אווז / תרד, ביצים עלומות, הולנדייז ועירית.", "preg": False, "vegan": False, "gf": False, "notes": "לא לנשים בהיריון!"},
-    {"name": "כריך סלט ביצים", "cat": "בוקר", "desc": "לחם מחמצת לבן, בצל מקורמל, סלט ביצים (מכיל צלפים), שאלוט פריך ועירית.", "preg": True, "vegan": False, "gf": False, "notes": "לא ניתן להוציא צלפים."},
-    {"name": "קרוק מאדאם", "cat": "בוקר", "desc": "טוסט קסטן, גבינת אמנטל, פרמזן, חזה אווז וחרדל. ביצת עין, בשמל וסלט.", "preg": False, "vegan": False, "gf": False, "notes": "לא ניתן להוציא אווז/גבינות מהטוסט."},
-    {"name": "גרנולה שלנו", "cat": "בוקר", "desc": "שיבולת שועל, שקדים, גרעינים, מייפל. מוגש עם יוגורט בקר, דבש ופירות.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל גלוטן ולקטוז."},
-    {"name": "פרנץ' טוסט", "cat": "בוקר", "desc": "בריוש מטוגן, מסקרפונה, קרמל מלוח, פרי העונה.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל גלוטן ולקטוז."},
-    {"name": "פנקייק", "cat": "בוקר", "desc": "3 יחידות עם אנגלז חמאה חומה, מסקרפונה, מייפל ואוכמניות.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל גלוטן ולקטוז."},
-    
-    # לאנץ' וערב
-    {"name": "צלחת גבינות", "cat": "לאנץ' וערב", "desc": "3 גבינות משתנות (ברי, קמבזולה, מנצ'גו), ריבה, פירות וקרקרים ללג.", "preg": True, "vegan": False, "gf": True, "notes": "מכיל לקטוז, ללא גלוטן."},
-    {"name": "סלט קיסר", "cat": "לאנץ' וערב", "desc": "חסה קיסר, רוטב (שמנת חמוצה, חרדל, פרמזן, אנשובי - ללא ביצים), קרוטונים ובצל.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל גלוטן ולקטוז. מתאים להיריון."},
-    {"name": "סלט עגבניות מגי", "cat": "לאנץ' וערב", "desc": "עגבניות רכות, בצל סגול, זעתר, צ'ילי חריף, רוקט, קרם פטה, שמן זית ולימון.", "preg": True, "vegan": False, "gf": True, "notes": "ללא גלוטן."},
-    {"name": "חסות פריכות", "cat": "לאנץ' וערב", "desc": "עלי אנדיב, חסה לאליק, נקטרינה, גבינת בושה, קשיו, ויניגרט מייפל.", "preg": True, "preg_note": "ללא גבינת עובש (בושה)", "vegan": False, "gf": True, "notes": "ללא גלוטן."},
-    {"name": "טרטר דג ים", "cat": "לאנץ' וערב", "desc": "50 גרם דג ים, שעועית ירוקה, שקדים, צ'ילי, עירית, מוגש עם יוגורט בקר.", "preg": False, "vegan": False, "gf": True, "notes": "לא מתאים להיריון! ללא גלוטן."},
-    {"name": "טרטר בקר (ערב)", "cat": "ערב", "desc": "שייטל קצוץ, שומשום, עירית, צ'ילי אדום. מוגש עם איולי שום ירוק וטוסטונים.", "preg": False, "vegan": False, "gf": False, "notes": "לא מתאים להיריון. לא מכיל לקטוז."},
-    {"name": "סשימי דג ים (ערב)", "cat": "ערב", "desc": "50 גרם סשימי, רוטב תפוזי דם, חזרת לבנה ואפונת שלג.", "preg": False, "vegan": False, "gf": True, "notes": "ללא גלוטן ולקטוז."},
-    {"name": "ברוקולי בגריל פחמים", "cat": "לאנץ' וערב", "desc": "על רומסקו, שמן זית, פרמזן וסחוג ירוק.", "preg": True, "vegan": True, "gf": True, "notes": "טבעוני וללא לקטוז רק ללא פרמזן. ללא גלוטן."},
-    {"name": "פטריות יער", "cat": "לאנץ' וערב", "desc": "פטריות ירדן פחם, סחוג, שמן זית, קרם שקדים, זרעי חמנייה.", "preg": True, "vegan": True, "gf": True, "notes": "טבעוני, ללג, ללא לקטוז."},
-    {"name": "אניולוטי כרישה (ערב)", "cat": "ערב", "desc": "6 כיסוני פסטה (עבודת יד) במילוי כרישה, מסקרפונה ופרמזן ברוטב חמאה וגרוייר.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל גלוטן ולקטוז."},
-    {"name": "בוסיאטה שרימפס", "cat": "לאנץ' וערב", "desc": "150 גרם פסטה בוסיאטה, 80 גרם שרימפס, שום, חמאה, עגבניות מיובשות, שאטה. פאן גרטטו.", "preg": True, "vegan": False, "gf": False, "notes": "מתאים להיריון רק כשהשרימפס WD."},
-    {"name": "שניצל (לאנץ')", "cat": "לאנץ'", "desc": "250 גרם חזה עוף בפנקו, מוגש עם פירה וקורנישונים.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל לקטוז וגלוטן."},
-    {"name": "חזה עוף סופרים (לאנץ')", "cat": "לאנץ'", "desc": "250 גרם חזה עוף עם עור, פירה, רוטב בר בלאן, צלפים.", "preg": True, "vegan": False, "gf": False, "notes": "מכיל לקטוז."},
-    {"name": "פאקרי לחי עגל", "cat": "לאנץ' וערב", "desc": "150 גרם לחי עגל ביין אדום וירקות שורש, רוטב חמאה ושום, פסטה פאקרי ופרמזן.", "preg": True, "vegan": False, "gf": False, "notes": "לא כשר! מכיל לקטוז וגלוטן."},
-    {"name": "באטר צ'יקן (ערב)", "cat": "ערב", "desc": "180 גרם שיפוד פרגית, רוטב עגבניות, שמנת, תבלינים הודים, עדשים שחורות ויוגורט.", "preg": True, "vegan": False, "gf": True, "notes": "ללא גלוטן! מכיל לקטוז."},
-    {"name": "המבורגר בקר", "cat": "לאנץ' וערב", "desc": "180 גרם בקר, גבינת צ'דר, איולי חרדל (ביצים חיות!), שאלוט פריך, צ'יפס.", "preg": True, "preg_note": "WD וללא איולי", "vegan": False, "gf": False, "notes": "מכיל גלוטן ולקטוז."},
-    {"name": "נתח קצבים", "cat": "לאנץ' וערב", "desc": "180 גרם נתח קצבים MR. ציר עוף חום ופירה.", "preg": False, "vegan": False, "gf": True, "notes": "מאוד לא מומלץ לשנות מידת עשייה! ללא גלוטן."},
-    {"name": "סינטה הולשטיין (ערב)", "cat": "ערב", "desc": "250 גרם סינטה מיושנת, מח עצם, ציר עוף, צ'יפס עבה. מומלץ M.", "preg": True, "preg_note": "WD בלבד", "vegan": False, "gf": True, "notes": "ללא גלוטן."},
-    {"name": "אורזו דג מפורק (לאנץ')", "cat": "לאנץ'", "desc": "דג ים על פסטה אורזו, חמאה, פפריקה, בצל, קייל ופאן גרטטו.", "preg": True, "preg_note": "WD בלבד", "vegan": False, "gf": False, "notes": "ללא שינויים. מכיל גלוטן ולקטוז."},
-    
-    # קינוחים
-    {"name": "עוגת גבינה באסקית", "cat": "קינוח", "desc": "עוגת גבינה קלאסית ומושחתת.", "preg": False, "vegan": False, "gf": True, "notes": "לא מתאימה להיריון! ללא גלוטן."},
-    {"name": "סמורס", "cat": "קינוח", "desc": "אנגלז חמאה חומה, קרמו שוקולד, קרמבל קקאו, מרשמלו שרוף.", "preg": True, "vegan": False, "gf": True, "notes": "ללא גלוטן (ללג). מכיל ביצים ולקטוז."},
-    {"name": "פיננסייר מיסו (ערב)", "cat": "קינוח", "desc": "עוגייה צרפתית מחמאה ושקדים עם מיסו, גלידת וניל וקצף מסקרפונה.", "preg": True, "vegan": False, "gf": True, "notes": "ללא גלוטן. ללא שינויים."}
-]
-
-wines_menu = {
-    "לבן": [
-        {"name": "הרמוניה (סמלי אסטייט) | כשר", "desc": "יוון. מוסקופילרו ומאלאגוזיה. ניחוח ורדים ופירות קיץ."},
-        {"name": "טימו (סאן מארזאנו)", "desc": "איטליה. ורמנטינו. פרחוני, אלטרנטיבה מעולה לאוהבי חצי יבש."},
-        {"name": "פרנץ קולומברד (סנילביץ) | כשר", "desc": "מישור החוף, ישראל. חמיצות מאוזנת ופרי רענן."},
-        {"name": "מואה בלאן | כשר", "desc": "הנגב. שרדונה, סובניון בלאן, שנין, רוסאן. מרקם אלגנטי."},
-        {"name": "בלאן סן (ארנו קומבייה)", "desc": "בורגון, צרפת. פירות טרופיים קלויים ואבק שריפה, חומציות חותכת."},
-        {"name": "מאנטיניה (סמלי אסטייט)", "desc": "יוון. הדרים וליצ'י מגובה 650 מטר."},
-        {"name": "אלפי רטיקה (נינו נגרי)", "desc": "לומברדיה. נביולו. תפוח ירוק, דבש ולימון."},
-        {"name": "פוג'יו סאלאיה פיקורינו", "desc": "אברוצו, איטליה. הדרי ורענן צעיר."},
-        {"name": "שנין בלאן כרם קדרון (רקנאטי) | כשר", "desc": "הגליל. פירות גלעין ודבשיות עדינה עם מליחות."},
-        {"name": "אסרטיקו ארטי (ביבליה חורה)", "desc": "תרקיה, יוון. הדרים ומינרליות בולטת."},
-        {"name": "סרה לופיני (אנג'לו נגרו)", "desc": "פיימונטה. ארנייז. פירות קיץ וטרופי."},
-        {"name": "ווברה (מארק בארדיף)", "desc": "עמק הלואר. שנין בלאן. עשיר, אפרסק ואגס."},
-        {"name": "שנסון לבן (קלו דה גת) | כשר", "desc": "הרי יהודה. שרדונה, סמיון, ויונייה."},
-        {"name": "סנסר לה מונטאשאן", "desc": "סנסר, צרפת. אבן צור וחומציות נעימה."},
-        {"name": "שאבלי (מואייר)", "desc": "בורגון. רענן קלאסי עם מינרליות עדינה."},
-        {"name": "רבולה (שצ'ורק)", "desc": "סלובניה. תאנים ושדה פורח."},
-        {"name": "תל שיפון לבן | כשר", "desc": "רמת הגולן. סובניון ורוסאן. הדרים וקלמנטינה."},
-        {"name": "להט לבן", "desc": "הגליל. פירות בשלים ופרחים צהובים."},
-        {"name": "תפן לבן (כישור) | כשר", "desc": "הגליל. 8 חודשים בחבית."},
-        {"name": "גוט בלאנש (ארנו קומבייה)", "desc": "בורגון. חמאה, עץ ואגוזים קלויים."},
-        {"name": "סובניון בלאן (שאטו גולן)", "desc": "הגליל. חמאתי, טרופי ומוחצן."},
-        {"name": "גודיו גפנים בוגרות", "desc": "ביארסו, ספרד. חמאתי, דבש וחבוש. גפנים בנות 80."}
-    ],
-    "אדום": [
-        {"name": "מאקון (מואייר)", "desc": "בורגון. גאמה. קל לשתייה, פרי אדום טרי."},
-        {"name": "ריוחה רזרבה (אולארה)", "desc": "ספרד. קטיפתי, עישון קל."},
-        {"name": "קסם (עגור) | כשר", "desc": "הרי יהודה. בלנד קברנה, מרלו וסירה. פרי חמצמץ ועשבי תיבול."},
-        {"name": "סירה (מואה) | כשר", "desc": "הנגב. פלפל שחור, נדיב ומאוזן."},
-        {"name": "טרין (פלטר)", "desc": "רמת הגולן. סיגליות, קקאו ודובדבן."},
-        {"name": "פינו נואר (פמיל פבר גוייריק)", "desc": "לנגדוק. פירותי ומעודן."},
-        {"name": "רומפיקולו (טומאסיי)", "desc": "טוסקנה. 12 חודשים בעץ, גוף מלא וטאנינים צובטים."},
-        {"name": "קריניאן גפנים בוגרות (פול מאס)", "desc": "לנגדוק. קוקוס, קלייה ופרי שחור."},
-        {"name": "מאלבק (קאטנה זאפאטה)", "desc": "ארגנטינה. פטל שחור ופרחוניות."},
-        {"name": "ארגמן (סניליביץ) | כשר", "desc": "מישור החוף. זן מקומי, צבע סגול חזק, חווה ופירות."},
-        {"name": "קברנה סובניון (מואה) | כשר", "desc": "הנגב. גוף מלא ונדיב."},
-        {"name": "קיאנטי סופריורה (פטרוניאנו)", "desc": "טוסקנה. סנג'ובזה ברמה גבוהה, תבלינים."},
-        {"name": "פיולוט (פרונוטו)", "desc": "פיימונטה. ברברה. ללא חביות, יין אוכל מצוין קליל."},
-        {"name": "ווילד גרנאש (סוסון ים) | כשר", "desc": "בר גיורא. קליל, שותים מעט קר."},
-        {"name": "קברנה סובניון כרם לבנון | כשר", "desc": "הגליל. סינון גס, 16 חודשים בחבית."},
-        {"name": "GSM (כישור) | כשר", "desc": "הגליל. אורירי ונעים."},
-        {"name": "פרדיגמה (מרגלית)", "desc": "מישור החוף. GSM ים תיכוני קליל."},
-        {"name": "פטיט קסטל | כשר", "desc": "הרי יהודה. איזון יפה בין עץ ופרי, טאנינים משיים."},
-        {"name": "שורש (צרעה) | כשר", "desc": "הרי יהודה. גוף מלא, קלייה, טאנינים עוצמתיים."},
-        {"name": "קברנה-פטי ורדו 'כרם נדב' | כשר", "desc": "רמת הגולן. סגול עוצמתי, טבק ושזיף שחור."}
-    ],
-    "רוזה וכתום": [
-        {"name": "רוזה ז'רדאן דה רוז (פול מאס)", "desc": "צרפת. תות ופרחי אביב."},
-        {"name": "רוזה גריי דה מרסלאן (רקנאטי) | כשר", "desc": "הגליל. בסגנון פרובאנס, המון רעננות."},
-        {"name": "רוזה (סנילביץ) | כשר", "desc": "מישור החוף. רענן וחד."},
-        {"name": "רוזה עגור | כשר", "desc": "הרי יהודה. קליפות הדרים, עלי ורדים."},
-        {"name": "רוזה לה רואה סוליי", "desc": "פרובאנס. דומדמניות ואפרסק."},
-        {"name": "רוזה רזיאל (קסטל) | כשר", "desc": "הרי יהודה. התיישן 6 חודשים בחבית."},
-        {"name": "סיווי פינו (קובל) | כתום", "desc": "סלובניה. פינו גריג'יו כתמתם. עגלגלות קטיפתית."},
-        {"name": "רוטס סוביניון בלאן (קובל) | כתום", "desc": "סלובניה. למון גראס ואשכולית. צבע ענברי."},
-        {"name": "טארונז'ה (לאפאזי) | כתום", "desc": "צרפת. התיישנות בחביות, קליפות תפוזים ורעננות."}
-    ],
-    "מבעבע": [
-        {"name": "פרוסקו אקסטרה דריי", "desc": "איטליה. רמזים של פרחים לבנים ופרי אקזוטי."},
-        {"name": "קרמו דה לואר", "desc": "צרפת. מבעבע איכותי, שמרים ובעבוע טבעי עדין."},
-        {"name": "פנינה רוזה (קובל)", "desc": "סלובניה. ורוד עמוק, אף מתקתק."},
-        {"name": "פט נט בייטא - מושקט", "desc": "סלובניה. שיטה מסורתית. מסטיק ואפרסק."},
-        {"name": "פט נט בייטא - שרדונה", "desc": "סלובניה. ירקרק מעורפל."},
-        {"name": "פט נט בייטא - בלאופרנקיש", "desc": "סלובניה. ורוד מסטיק מעונן, עור ופירות שחורים."},
-        {"name": "פט נט (שצ'ורק)", "desc": "סלובניה. אשכולית אדומה ולימוניות."},
-        {"name": "אימפריאל שמפיין (מואט)", "desc": "שמפיין, צרפת. ארומה של בריוש, יבשה מאוד."},
-        {"name": "שמפנייה בלאן דה נואר ברוט", "desc": "צרפת. פינו נואר. עוצמתי אך מאוזן ועגול."}
-    ]
-}
-
-cocktails_list = [
-    {"n": "Jasmin 38 (ג'זמין 38)", "i": "45 סלואו ג'ין, 22.5 קמפרי, 22.5 ליקר רובארב, 22.5 מיץ לימון", "p": "שקשוק, סינון לקרח חדש | כוס לאו בול, פלח תפוז"},
-    {"n": "Smoky Paloma (סמוקי פלומה)", "i": "30 טקילה, 15 מזקל, 15 ליקר אשכוליות, 22.5 לימון, טיפות מלח, סודה", "p": "שקשוק, סינון כפול, סגירה בסודה | היי בול, פלח תפוז"},
-    {"n": "Hamara Cosmo (חמרה קוסמו)", "i": "45 וודקה ציפורן, 22.5 מיץ רימונים, 22.5 לימון, 15 קוונטרו, 15 מקציף, 15 מי סוכר", "p": "שקשוק רטוב + יבש | כוס מרגריטה"},
-    {"n": "Torino spritz (טורינו שפריץ)", "i": "60 ורמוט אדום, פרוסקו", "p": "בנייה בכוס, סגירה בפרוסקו | כוס יין, פלח תפוז"},
-    {"n": "Inca Gold", "i": "30 פיסקו, 15 ליקר פסיפלורה, 30 לימון, 22.5 מי סוכר", "p": "שקשוק, סגירה בפרוסקו | כוס מרגריטה"},
-    {"n": "דאטה ביאנקה", "i": "30 ג'ין, 30 קינה אפרטיף, 15 מאנצינו סקו, 15 ודטה ביאנקו, דש ביטר תפוז", "p": "כוס ערבוב | כוס ניק ונורה, טוויסט לימון"},
-    {"n": "Trinidad 10", "i": "22.5 אנגסטורה, 45 רוזטת אגוזי לוז, 30 ברבן, 15 לימון, דש ליין, מקציף", "p": "שקשוק רטוב + יבש | מרגריטה, זסט לימון אובש"},
-    {"n": "Alpine Daiquiri", "i": "45 רום מתוסלם פלטינו, 30 דולין דריי, 22.5 לימון, 15 ז'נפי, 22.5 מייפל חריף", "p": "שייקר, חצי רים שאטה | מרגריטה"},
-    {"n": "Aviation", "i": "45 ג'ין, 22.5 לימון, 15 ליקר סיגליות, 15 מרסקינו, מקציף", "p": "שקשוק רטוב + יבש | דובדבן אמרנה, מרגריטה"},
-    {"n": "Naked & Famous", "i": "22.5 מזקל, 22.5 שרטרז צהוב, 22.5 אפרול, 22.5 לימון", "p": "שייקר | מרגריטה, תפוז מיובש"},
-    {"n": "נגרוני הבית / טינטורטו", "i": "22.5 לימון, 30 בלנד ורמוטים, 30 קמפרי, 30 ג'ין", "p": "כוס ערבוב | לואו בול, קרח גדול"},
-    {"n": "קריבייאן קופי", "i": "30 רום כהה, 30 ליקר קקאו, 30 אספרסו", "p": "שקשוק | ניק ונורה"},
-    {"n": "ברקפסט נגרוני", "i": "45 קולד ברו, 30 ורמוט אדום, 30 קמפרי", "p": "כוס ערבוב | לואו בול, טוויסט תפוז"},
-    {"n": "בלאדי מרי", "i": "50 וודקה, 120 מיץ עגבניות, 22.5 לימון, 15 ווסטרשייר, טבסקו, מלח פלפל", "p": "ערבוב בזריקה | הייבול, סלרי ולימון"},
-    {"n": "אספרסו מרטיני (קלאסי / קוקו)", "i": "מנת אספרסו, 60 וודקה, 15 קפה, 10 סוכר (או בייליס בגרסת קוקו)", "p": "שקשוק | פולי קפה, ניק ונורה"},
-    {"n": "וויסקי סאוור / Old Made", "i": "60 ברבן, 30 לימון, 22.5 סוכר, 15 מקציף", "p": "שקשוק רטוב + יבש | לואו בול, דש אנגסטורה"},
-    {"n": "באזיל סמאש", "i": "60 ג'ין, 30 לימון, 22.5 סוכר, בזיליקום", "p": "כתישת בזיליקום, שייקר | לואו בול"},
-    {"n": "מוחיטו", "i": "60 רום לבן, 30 לימון, 22.5 סוכר, נענע, סודה", "p": "כתישה ושייקר | הייבול"},
-    {"n": "מרגריטה (קלאסית / חריפה)", "i": "45 טקילה בלאנקו, 30 קואנטרו, 30 לימון (+פלפל חריף בגרסה החריפה)", "p": "שייקר | כוס מרגריטה, רים מלח"},
-    {"n": "אפרול שפריץ / קמפרי שפריץ", "i": "60 אפרול (או פמפל/קמפרי), יין מבעבע, סודה", "p": "בנייה בכוס יין מפוצצת קרח, פלח תפוז"},
-    {"n": "נגרוני (קלאסי / לבן)", "i": "30 ג'ין, 30 קמפרי (או קינה), 30 ורמוט אדום (או מאנצינו)", "p": "כוס ערבוב | לואו בול, קרח גדול, תפוז"},
-    {"n": "Old Fashioned", "i": "60 ברבן, 3 דש אנגסטורה, קוביית סוכר", "p": "כוס ערבוב | לואו בול, טוויסט תפוז"},
-    {"n": "מנהטן / Black Manhattan", "i": "50 ברבן/ריי, 20 ורמוט רוסו (או אוורנה), 2 דש אנגסטורה", "p": "כוס ערבוב | ניק ונורה, דובדבן אמרנה"},
-    {"n": "Last Word", "i": "22.5 ג'ין, 22.5 שרטרז ירוק, 22.5 מרסקינו, 22.5 לימון", "p": "שייקר | מרגריטה, זסט לימון"},
-    {"n": "Paper Plane", "i": "22.5 ברבן, 22.5 אמארו נונינו, 22.5 אפרול, 22.5 לימון", "p": "שייקר | מרגריטה, זסט תפוז"},
-    {"n": "דאקירי / Hemingway", "i": "60 רום לבן, 30 לימון, 15 סוכר (בגרסת המינגווי: אשכוליות ומרסקינו)", "p": "שייקר | ניק ונורה/מרגריטה"},
-    {"n": "קוסמופוליטן", "i": "60 וודקה, 30 חמוציות, 22.5 קואנטרו, 10 לימון, 10 סוכר", "p": "שייקר | כוס מרגריטה"},
-    {"n": "Penicillin (פניצילין)", "i": "60 ברבן, 10 דבש, 10 ג'ינג'ר, 30 לימון, טיפות מלח, כפית וויסקי מעושן", "p": "שייקר | לואו בול, פרוסת ג'ינג'ר"},
-    {"n": "Long Island Ice Tea", "i": "22.5 כל לבן (וודקה, ג'ין, רום, טקילה, קוואנטרו), לימון, סוכר, קולה", "p": "שייקר | הייבול"}
-]
-
-tasks_data = {
-    "פתיחה": [
-        "לעשות אצבע (שעון נוכחות).",
-        "סידור ביוב ושטיחים (גם שטיח צ'קר).",
-        "הורדת מנה בכל ראש של המכונת קפה - לא לשימוש.",
-        "הורדת קונדומים מבקבוקים והנחת פוררים.",
-        "חיתוך לימונים ותפוזים.",
-        "הוצאת בקבוקי אלכוהול ממקרר מטבח לאמבטיה.",
-        "וידוא מלאים: תפוזים, לימונים, מלפפון, צ'ילי, ג'ינג'ר, זיתים, אמרנה, בזיליקום, נענע.",
-        "הורדת כסאות וניקוי הבר עם שפריצר כחול.",
-        "סידור הבר מימין לשמאל: פרח -> מלח פלפל -> נר.",
-        "מילוי קרח בבר - חובה 3 אמבטיות מלאות!",
-        "הכנת מי סוכר ותרכיז מאצ'ה לכל היום."
-    ],
-    "סגירה": [
-        "קידום: סגירת ראש אחד במכונה, מילוי סכו\"ם, ניקוי מגירת קפה ומטחנה.",
-        "ניקוי ברז בירה ואיזור שטיחים/משטחים (סקוץ' וסבון).",
-        "שפיכת מים רותחים על כל הפוררים (לא בפנים) והבקבוקים וייבושם.",
-        "כתיבת תאריך על בקבוקי יין פתוחים והחזרה למקררים הרלוונטיים.",
-        "ניקוי צ'ייסרים ואזור ספיד (לרוקן קרח, שטיחים, ניקוז - סקוץ' וסבון).",
-        "ניקוי מכונת קפה מכל הכיוונים, שטיפת ראשים, והחלפת מגבת סטימר.",
-        "כל הפוררים ל-4 ליטר עם מים, קונדומים על בקבוקים וברזי בירה.",
-        "החלפת שקיות זבל, ניקוי מאחורי הפחים.",
-        "ניקוי הבר עצמו, ניקיון כסאות - **ורק אז להפוך אותם על הבר**.",
-        "גלגול שטיחים למחוץ לבר ושטיפה עם סבון. בדיקת כיסים (שאין פותחן פתוח)."
-    ],
-    "משימות יומיות": [
-        "**ראשון:** בוקר: הקפאת מקפיא חזרה, ניקיון אקסטרות. | ערב: ניקיון דיספליי ורמוטים, מדף ביטרים.",
-        "**שני:** בוקר: ניקיון דיספליי ג'ין, כוסות יין ובירה. | ערב: שטיפת קונדומים ושמפניירות.",
-        "**שלישי:** בוקר: דיספליי וויסקי וטקילה. | ערב: ניקיון מדף אקסטרות ומגירת קופה.",
-        "**רביעי:** בוקר: ניקוי מקרר יין לבן (סקוץ' וסבון).",
-        "**חמישי:** בוקר: הכנת נענע לסופ\"ש (4 ליטר תפזורת ותפרחת). | ערב: מגירת סכו\"ם.",
-        "**שישי:** בוקר: --- | ערב: ניקיון מגירת תה, מלח פלפל.",
-        "**שבת:** בוקר: --- | ערב: הפשרת מקפיא לניקוי."
-    ]
-}
-
-# ---------------------------------------------------------
-# ניהול State
-# ---------------------------------------------------------
 if 'role' not in st.session_state:
     st.session_state.role = None
 
@@ -255,128 +80,110 @@ def set_role(role):
     st.session_state.role = role
 
 # ---------------------------------------------------------
-# מסך ראשי - בחירת תפקיד# ---------------------------------------------------------
-# מסך ראשי - בחירת תפקיד
+# עמוד שער יוקרתי ונקי לנייד
 # ---------------------------------------------------------
 if st.session_state.role is None:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
-    
-    # לוגו CAFÉ 38 מעוצב ב-CSS
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 40px;">
-        <h1 style="font-size: 6rem !important; color: #1e3799; font-weight: 900 !important; letter-spacing: 4px; margin-bottom: 0;">CAFÉ 38</h1>
-        <p style="font-size: 26px; color: #7f8fa6; margin-top: -20px; font-weight: bold;">ברוכים הבאים למשמרת</p>
+    <div style="text-align: center; margin-bottom: 50px;">
+        <h1 style="font-size: clamp(3.5rem, 10vw, 6rem) !important; color: #1e3799; font-weight: 800 !important; letter-spacing: 4px; margin-bottom: 0;">CAFÉ 38</h1>
+        <p style="font-size: clamp(1.2rem, 4vw, 1.8rem); color: #7f8fa6; margin-top: -10px; font-weight: 600;">ברוכים הבאים למשמרת</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # הערה: אם תרצה להכניס קובץ תמונה אמיתי של הלוגו (למשל logo.png), 
-    # פשוט שים אותו בתיקייה, תמחק את הבלוק למעלה ותשתמש בשורה הזאת:
-    # st.image("logo.png", use_container_width=True)
-
-    st.write("") 
     col1, col2, col3, col4 = st.columns([1, 2, 2, 1])
-    
-    with col2:
-        st.button("🍸 ברמן", on_click=set_role, args=("bartender",), use_container_width=True)
-    with col3:
-        st.button("📝 מלצר", on_click=set_role, args=("waiter",), use_container_width=True)
+    with col2: st.button("🍸 ברמן", on_click=set_role, args=("bartender",), use_container_width=True)
+    with col3: st.button("📝 מלצר", on_click=set_role, args=("waiter",), use_container_width=True)
+
 # ---------------------------------------------------------
-# מסך מלצרים 
+# מסך מלצרים
 # ---------------------------------------------------------
 elif st.session_state.role == "waiter":
     col1, col2 = st.columns([8, 2])
-    with col1:
-        st.markdown("<h1>🍽️ תפריט מלצרים המלא - קפה 38</h1>", unsafe_allow_html=True)
-    with col2:
-        st.button("החלף תפקיד ↩", on_click=set_role, args=(None,))
+    with col1: st.markdown("<h2>🍽️ תפריט ומחלקות אוכל</h2>", unsafe_allow_html=True)
+    with col2: st.button("איפוס ↩", on_click=set_role, args=(None,))
     
-    st.markdown("---")
-    
-    # סינונים ענקיים
-    st.markdown("<h3>מערכת סינון אלרגנים:</h3>", unsafe_allow_html=True)
-    filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
+    # כפתורי סינון מהירים במובייל
+    f_col1, f_col2, f_col3, f_col4 = st.columns(4)
     filter_type = "הכל"
-    if filter_col2.button("🌱 טבעוני בלבד", use_container_width=True): filter_type = "vegan"
-    if filter_col3.button("🤰 מתאים להיריון", use_container_width=True): filter_type = "preg"
-    if filter_col4.button("🌾 ללא גלוטן", use_container_width=True): filter_type = "gf"
-    if filter_col1.button("הצג את כל התפריט", use_container_width=True): filter_type = "הכל"
+    if f_col2.button("🌱 טבעוני", use_container_width=True): filter_type = "vegan"
+    if f_col3.button("🤰 היריון", use_container_width=True): filter_type = "preg"
+    if f_col4.button("🌾 ללא גלוטן", use_container_width=True): filter_type = "gf"
+    if f_col1.button("הכל", use_container_width=True): filter_type = "הכל"
 
-    if filter_type != "הכל":
-        st.success(f"**מצב סינון פעיל:** מציג רק מנות שעונות על הדרישה.")
-
-    # הצגת התפריט 
-    for item in food_menu:
-        if filter_type == "vegan" and not item["vegan"]: continue
-        if filter_type == "preg" and not item["preg"]: continue
-        if filter_type == "gf" and not item["gf"]: continue
-        
-        tags_html = ""
-        if item["vegan"]: tags_html += "<span class='tag t-veg'>🌱 טבעוני</span>"
-        if item["gf"]: tags_html += "<span class='tag t-gf'>🌾 ללא גלוטן</span>"
-        if item["preg"]: 
-            preg_text = f"🤰 מתאים להיריון ({item.get('preg_note', 'בטוח')})" if 'preg_note' in item else "🤰 מתאים להיריון"
-            tags_html += f"<span class='tag t-preg'>{preg_text}</span>"
+    query = "SELECT * FROM food WHERE 1=1"
+    if filter_type == "vegan": query += " AND is_vegan = 1"
+    if filter_type == "preg": query += " AND is_preg_safe = 1"
+    if filter_type == "gf": query += " AND is_gf = 1"
+    
+    items = fetch_data(query)
+    for item in items:
+        tags = ""
+        if item["is_vegan"]: tags += "<span class='tag t-veg'>🌱 טבעוני</span>"
+        if item["is_gf"]: tags += "<span class='tag t-gf'>🌾 ללא גלוטן</span>"
+        if item["is_preg_safe"]:
+            tags += f"<span class='tag t-preg'>🤰 היריון: {item['preg_note'] if item['preg_note'] else 'מאושר'}</span>"
         else:
-            tags_html += "<span class='tag t-warn'>🚫 לא מתאים להיריון! (סכנה)</span>"
+            tags += "<span class='tag t-warn'>🚫 לא להיריון</span>"
 
-        html_card = f"""
+        st.markdown(f"""
         <div class="card card-food">
-            <div class="item-title">{item['name']} <span style="font-size:18px; color:#7f8fa6;">[{item['cat']}]</span></div>
-            <div class="item-desc">{item['desc']}</div>
-            <div class="item-notes">שים לב: {item['notes']}</div>
-            <div><br>{tags_html}</div>
+            <div class="item-title">{item['name']} <span style="font-size:14px; color:#aaa;">[{item['category']}]</span></div>
+            <div class="item-desc">{item['description']}</div>
+            <div>{tags}</div>
+            <div class="item-notes">מידע חיוני: {item['notes']}</div>
         </div>
-        """
-        st.markdown(html_card, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# מסך ברמנים 
+# מסך ברמנים - קוקטיילים וצ'קליסטים מלאים מ-SQL
 # ---------------------------------------------------------
 elif st.session_state.role == "bartender":
     col1, col2 = st.columns([8, 2])
-    with col1:
-        st.markdown("<h1>🍸 עמדת ברמן (ספר בר מלא)</h1>", unsafe_allow_html=True)
-    with col2:
-        st.button("החלף תפקיד ↩", on_click=set_role, args=(None,))
+    with col1: st.markdown("<h2>🍸 עמדת בר ומשימות</h2>", unsafe_allow_html=True)
+    with col2: st.button("איפוס ↩", on_click=set_role, args=(None,))
     
-    # השתמשתי פה באובייקטים של Streamlit לטאבים מרווחים ויפים
-    tab1, tab2, tab3, tab4 = st.tabs(["🍹 קוקטיילים", "🍷 תפריט יין (2025)", "🌅 פתיחה וסגירה", "📅 משימות יומיות"])
+    tab1, tab2, tab3 = st.tabs(["🍹 מתכוני קוקטיילים", "🌅 צ'קליסט משמרת", "📅 משימות יומיות"])
     
     with tab1:
-        st.markdown("<h2>רשימת קוקטיילים מקיפה</h2>", unsafe_allow_html=True)
-        for c in cocktails_list:
-            c_card = f"""
+        cocktails = fetch_data("SELECT * FROM cocktails")
+        for c in cocktails:
+            # הפיכת הסימן '|' לירידת שורה כדי שיהיה קל ללמוד בעין
+            ingredients_html = c['ingredients'].replace(" | ", "<br>• ")
+            
+            st.markdown(f"""
             <div class="card card-cocktail">
-                <div class="item-title">{c['n']}</div>
-                <div class="item-desc"><b>צורת הגשה:</b> {c['p']}</div>
-                <div style="color:#d35400; font-size:20px; font-weight:bold;">רכיבים: {c['i']}</div>
+                <div class="item-title" style="color:#1e3799;">{c['name']}</div>
+                <div class="item-desc"><b>טכניקה וכוס:</b> {c['glass_prep']}</div>
+                <div class="ingredients-box">
+                    <span style="color:#7f8fa6; font-size:13px; display:block; margin-bottom:5px;">רכיבים לבנייה:</span>
+                    • {ingredients_html}
+                </div>
             </div>
-            """
-            st.markdown(c_card, unsafe_allow_html=True)
-
+            """, unsafe_allow_html=True)
+            
     with tab2:
-        st.markdown("<h2>תפריט יין קיץ 2025</h2>", unsafe_allow_html=True)
-        for category, wine_list in wines_menu.items():
-            with st.expander(f"🍷 רשימת יינות - {category}", expanded=False):
-                for w in wine_list:
-                    w_card = f"""
-                    <div class="card card-wine">
-                        <div class="item-title">{w['name']}</div>
-                        <div class="item-desc">{w['desc']}</div>
-                    </div>
-                    """
-                    st.markdown(w_card, unsafe_allow_html=True)
+        st.markdown("<h3>📋 נהלי פתיחה וסגירה מתוך ה-SQL</h3>", unsafe_allow_html=True)
+        
+        col_open, col_close = st.columns(2)
+        with col_open:
+            st.markdown("<h4 style='color:#16a085;'>🌅 פתיחת בר</h4>", unsafe_allow_html=True)
+            open_tasks = fetch_data("SELECT * FROM checklists WHERE type='פתיחה'")
+            for t in open_tasks:
+                st.markdown(f"<div class='card card-task' style='padding:10px;'>✔️ {t['task']}</div>", unsafe_allow_html=True)
+                
+        with col_close:
+            st.markdown("<h4 style='color:#c0392b;'>🌌 סגירת בר</h4>", unsafe_allow_html=True)
+            close_tasks = fetch_data("SELECT * FROM checklists WHERE type='סגירה'")
+            for t in close_tasks:
+                st.markdown(f"<div class='card card-task' style='padding:10px; border-right-color:#c0392b;'>🛑 {t['task']}</div>", unsafe_allow_html=True)
 
     with tab3:
-        st.markdown("<h2>פתיחת בר - רשימת בדיקה</h2>", unsafe_allow_html=True)
-        for t in tasks_data["פתיחה"]:
-            st.markdown(f"<div style='font-size: 22px; margin-bottom: 10px;'>✔️ {t}</div>", unsafe_allow_html=True)
-            
-        st.markdown("<hr><h2>סגירת בר - רשימת בדיקה</h2>", unsafe_allow_html=True)
-        for t in tasks_data["סגירה"]:
-            st.markdown(f"<div style='font-size: 22px; margin-bottom: 10px; color:#c0392b;'>🛑 {t}</div>", unsafe_allow_html=True)
-            
-    with tab4:
-        st.markdown("<h2>משימות יום יומיות קבועות</h2>", unsafe_allow_html=True)
-        for t in tasks_data["משימות יומיות"]:
-            st.markdown(f"<div class='card card-task'><div class='item-desc'>{t}</div></div>", unsafe_allow_html=True)
+        st.markdown("<h3>📅 משימות ניקיון שבועיות קבועות</h3>", unsafe_allow_html=True)
+        days = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
+        for day in days:
+            day_tasks = fetch_data("SELECT * FROM checklists WHERE type=?", (day,))
+            if day_tasks:
+                st.markdown(f"#### יום {day}")
+                for t in day_tasks:
+                    st.markdown(f"<div class='card card-task' style='border-right-color:#8e44ad; padding:12px;'>📅 {t['task']}</div>", unsafe_allow_html=True)
