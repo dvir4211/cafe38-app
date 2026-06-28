@@ -216,7 +216,7 @@ elif st.session_state.role == "bartender":
             """, unsafe_allow_html=True)
             
     with tab2:
-        st.markdown("<h3>📋 נהלי פתיחה וסגירה מתוך ה-SQL</h3>", unsafe_allow_html=True)
+        st.markdown("<h3>📋 נהלי פתיחה וסגירה </h3>", unsafe_allow_html=True)
         col_open, col_close = st.columns(2)
         with col_open:
             st.markdown("<h4 style='color:#16a085;'>🌅 פתיחת בר</h4>", unsafe_allow_html=True)
